@@ -1,0 +1,32 @@
+\chapter{Testing and Evaluation}
+\label{chapter:testing-evaluation}
+
+The implementation of the Firefox Sync support in Epiphany proved to be a complicated task which took more time to finish than initially foreseen. Consequently, that delayed me to get feedback from the GNOME community in time. At the moment of writing this thesis, the Firefox Sync support exists on a side-branch of Epiphany and is awaiting review from Epiphany's maintainer before it is integrated into the \textit{master} branch. When that happens, the GNOME community will be able to try it and provide relevant feedback. However, I did manage to obtain some immediate feedback from some of my university colleagues.
+
+\section {Project Testing}
+\label{sec:project-testing}
+
+During and after the implementation of the Firefox Sync support in Epiphany, I have thoroughly tested the synchronization support in various scenarios. I was pleased to find the synchronization working as intended in each of them. The testing scenarios included the synchronization of bookmarks, history, passwords, open tabs across:
+
+\begin{enumerate}
+  \item Epiphany instances only.
+  \item Epiphany instances and Firefox desktop instances (Linux \& Windows).
+  \item Epiphany instances and Firefox mobile instances (Android).
+  \item Epiphany instances, Firefox desktop instances (Linux \& Windows) and Firefox mobile instances (Android).
+\end{enumerate}
+
+Unfortunately, I didn't have at my disposal an iOS device to test with Firefox iOS instances too, but I assume there are no reasons for the synchronization not to work there too.
+
+\section{Feedback Received}
+\label{sec:feedback-received}
+
+The only way of testing my synchronization support is by building and running Epiphany from sources. Since that is a time-consuming process due to Epiphany's numerous dependencies, I have found only a few colleagues willing to do it. Nevertheless, their feedback was sufficient enough to provide insight about the project's usability and help me improve it.
+
+Everyone who tested the Firefox Sync support in Epiphany had an overall positive attitude towards it. They found it easy to access the user interface from the preferences dialog and sign in with their Firefox account. They also were pleased with how the synchronization works in the background, without affecting the web browsing. Most of them tested the data synchronization between Epiphany and Firefox and were satisfied to see how the two web browsers share data (e.g. how adding and deleting bookmarks from one web browser is revealed to the other).
+
+The feedback I received mainly helped me improve the user interface that allows customizing the synchronization experience. In the early stages of my project, the interface had a vertical-only structure. This was pointed out to me as being too space-consuming. Therefore, I designed a new interface where the check buttons that enable the synchronization of individual collections are displayed horizontally and the action buttons are displayed on the right side of the panel, as shown in \labelindexref{Figure}{img:after-sign-in}. Moreover, almost all the users expressed confusion about the \textit{Sync now} button, in the sense that they would not know if the synchronization actually takes place when they click the button. To solve this issue, I decided to do the following: when the user clicks the \textit{Sync now} button, the button becomes insensitive and grayed-out until the synchronization is finished. At that point, the button becomes sensitive again. Furthermore, I chose to add a label to display the time of the last synchronization, which is updated not only when an automatic synchronization happens, but also when the user clicks the \textit{Sync now} button. These changes cleared the confusion about the act of performing a synchronization at demand.
+
+\section{Project Evaluation}
+\label{sec:project-evaluation}
+
+As previously mentioned, my project is going to be further evaluated by GNOME community members and Epiphany users once my code is reviewed and integrated into the \textit{master} branch of Epiphany. At that point, the Firefox Sync support in Epiphany will be listed as an experimental feature that requires user feedback before being shipped in the next GNOME release, 3.26. I will be looking forward to obtaining a substantial amount of impressions regarding the synchronization support, coming from Epiphany users around the globe. This will greatly help me to assess the value of the project further and improve it where necessary.

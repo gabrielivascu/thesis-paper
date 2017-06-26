@@ -1,0 +1,63 @@
+\chapter{Motivation and Objectives}
+\label{chapter:motivation-objectives}
+
+\section{Motivation}
+\label{sec:motivation}
+
+As mentioned in \labelindexref{Section}{sec:project-description}, Epiphany is a web browser that lacks support for synchronizing browsing data. This is a missing feature which has been previously discussed by Epiphany's developers over the years, but no definite conclusion had been reached. As a GNOME user and contributor myself, I have decided to implement a synchronization solution for Epiphany with the hope that it will help improve the experience that GNOME users have with Epiphany. And I found no better solution than Firefox Sync.
+
+Firefox Sync is a web browser synchronization feature developed by Mozilla's engineers to synchronize browsing data between Firefox instances. It is currently implemented in Firefox on all the major platforms: Linux, Windows, Android, iOS. In its true nature, Firefox Sync is more of a protocol that describes how the synchronization clients  (i.e. the web browsers) have to interact with Mozilla's servers to be able to access the synchronized data.
+
+There are a few key reasons for which I have chosen Firefox Sync as a synchronization solution for Epiphany:
+
+\begin{itemize}
+  \item Thanks to its design, the protocol itself solves two of the problems described in \labelindexref{Subsection}{sub-sec:sync-challenges}, as \textbf{it handles well complex data formats and ensures data security}. The synchronized data is kept encrypted on the storage servers in a manner that not even Mozilla can read it. The only ones that can read the stored data are the synchronization clients since the encryption key is held only by them. The other three challenges are left to the responsibility of the synchronization clients.
+
+  \item In Firefox Sync, most of the synchronization logic falls into the responsibility of the clients, thus making it harder to implement than other similar solutions (e.g. OwnCloud\footnote{\url{https://owncloud.org/}}). However, \textbf{it requires minimal user interaction} which makes it more enjoyable for the end users. The only requirement that the users need to meet to be able to synchronize their data is owning a Firefox account.
+
+  \item By implementing Firefox Sync in Epiphany, \textbf{Epiphany can share data with Firefox through Mozilla's storage servers}. This means that any data uploaded by Epiphany is visible in Firefox and vice-versa. Therefore, users can synchronize their browsing data not only between Epiphany instances but also between Epiphany and Firefox instances.
+
+  \item \textbf{The synchronized data is stored on Mozilla's servers}, which means GNOME does not have to worry about hosting dedicated storage servers.
+\end{itemize}
+
+\section{Objectives}
+\label{sec:objectives}
+
+After presenting the motivation behind my project in the previous section, the objectives are rather straightforward:
+
+\begin{itemize}
+  \item \textbf{Implement the client-side of Firefox Sync in Epiphany}. This will allow Epiphany to communicate with the Mozilla servers that are part of Firefox Sync, and therefore, access the user data stored on the servers.
+
+  \item \textbf{Design and implement the actual synchronization of Epiphany's browsing data}. This refers to how Epiphany uses its ability to communicate with the storage server to synchronize its bookmarks, history, passwords and open tabs. This involves not only periodical object imports and exports to the storage server, but also proper handling of the conflicts that may arise during these operations.
+
+  \item \textbf{Create a user interface where Epiphany users can sign in with their Firefox account and configure their synchronization preferences}. Users will be able to select what collections to be synchronized (bookmarks, history, passwords, open tabs), whether to synchronize with Firefox or not and what the synchronization frequency should be. Besides this, users will be able to perform a synchronization at demand with the help of a dedicated button and also edit their device name in the context of Firefox Sync.
+\end{itemize}
+
+\section{Use Cases}
+\label{sec:use-cases}
+
+The Firefox Sync support in Epiphany was built with three use cases in mind:
+
+\begin{enumerate}
+  \item \textbf{To provide Epiphany users a way to synchronize their browsing data across their devices}. This mainly means computers, laptops and tablets that run GNOME as a desktop environment. Users can customize their synchronization experience and choose what collections to synchronize.
+
+  \item \textbf{To let Epiphany users share data between Epiphany and Firefox if they wish to}. One may argue that using more than one web browser on a daily basis is uncommon and there isn't any practical use case of synchronizing data between two different web browsers. However, there is one thing that has to be considered: Epiphany runs only on Linux and cannot run on Windows. Therefore, I believe this is a valid use case for Epiphany users that have Windows as a secondary operating system: they will be able to access their browsing data from Epiphany in Firefox on Windows.
+
+  \item \textbf{To act as a backup/cloud storage}. Whenever Epiphany users reinstall their operating system, they would lose all their browsing data. The only things that can be salvaged are bookmarks and history. Bookmarks need to be exported to file, then the file saved to an external storage and then the bookmarks imported back from the file once the reinstall has completed. But this is a cumbersome process. On the other hand, history can be salvaged just by making a backup of the history database file. But that is stored in a hidden configuration directory that not many users know about. With the new synchronization support, all the data is kept safely on Mozilla's servers and is immediately imported when the user signs in with the Firefox account.
+\end{enumerate}
+
+When it comes to how users interact with the synchronization support, the flow is pretty simple:
+
+\begin{enumerate}
+  \item The user visits the Sync tab of the preferences dialog of Epiphany.
+
+  \item A panel with a Firefox iframe is displayed where the user can sign in with an existent Firefox account or create a new one to sign in with.
+
+  \item After the sign in has completed successfully, the previous panel is replaced with another panel that displays the synchronization options.
+
+  \item The user may then configure the synchronization options: what collections to synchronize, whether to synchronize with Firefox or not, the synchronization frequency and the device name.
+
+  \item When the preferences dialog is closed, the synchronization options take effect and an initial synchronization is performed. This is different from a regular synchronization because the collections have to be queried from the beginning of time. After that, a periodical synchronization is scheduled at the frequency chosen by the user.
+
+  \item At any time, the user can visit the preferences dialog and edit the synchronization options, view the synchronized open tabs, perform a synchronization on demand or sign out.
+\end{enumerate}

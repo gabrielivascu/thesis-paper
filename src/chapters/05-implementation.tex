@@ -1,0 +1,176 @@
+\chapter{Project Implementation}
+\label{chapter:project-implementation}
+
+While the previous chapter has presented how Firefox Sync works, this chapter delves into the implementation of the Firefox Sync support in Epiphany. It describes the software technologies used in Epiphany, as well as and how the synchronization support was implemented, the challenges encountered and the lessons learned.
+
+\section{Building Blocks}
+\label{sec:building-blocks}
+
+Like all GNOME applications, Epiphany runs only on GNU/Linux distributions that support the GNOME desktop environment. It can either be built from sources or installed from the dedicated software manager application. Just as most of the GNOME applications, Epiphany is written in C using the suite of tools that GNOME provides to its developers. These facilitate the development of both low-level and high-level applications. Besides the already-used libraries, I had to use new libraries to implement the synchronization support. Further, I am presenting the libraries that Epiphany is built with the help of, including the newly-added ones.
+
+\subsection{GNOME Libraries}
+\label{sub-sec:gnome-libraries}
+
+\textbf{GLib}
+
+\textit{GLib} is a low-level cross-platform library written in C that is divided into five standalone components:
+
+\begin{enumerate}
+  \item \textbf{\textit{GLib}}, provides utility functions for various operations that include data structures, dynamic strings, quarks, function hooking, timers etc.
+
+  \item \textbf{\textit{GObject}}\footnote{\url{https://en.wikipedia.org/wiki/GObject}}, a framework based on a generic dynamic type system that provides object-oriented C-based APIs. It can be used directly in C programs, but can also be bound to other languages to provide transparent cross-language interoperability.
+
+  \item \textbf{\textit{GThread}}, provides thread programming, synchronization primitives, asynchronous queues and message passing utility functions.
+
+  \item \textbf{\textit{GModule}}, provides dynamic loading of modules, i.e. software components that add a specific feature to an existing program.
+
+  \item \textbf{\textit{GIO}}\footnote{\url{https://en.wikipedia.org/wiki/GIO_(software)}}, offers a consistent interface to virtual file systems that allow applications to access both local and remote files.
+\end{enumerate}
+
+\textbf{GTK+} and \textbf{WebKitGTK+}
+
+\textit{GTK+}\footnote{\url{https://en.wikipedia.org/wiki/GTK\%2B}} is a full featured cross-platform object-oriented widget toolkit for creating graphical user interfaces. It is written in C, using \textit{GObject} for the object orientation. It is designed to be used not only in C programs but also in a wide range of other languages (e.g. Python, Perl, Java, etc.) through language bindings. \textit{WebKitGTK+}\footnote{\url{https://wiki.gnome.org/Projects/WebKitGtk}} is a \textit{GTK+} port of WebKit, the open source web content engine. Epiphany uses \textit{GTK+} and \textit{WebKitGTK+} to render its UI and the web content.
+
+\textbf{Libsecret}
+
+\textit{Libsecret}\footnote{\url{https://wiki.gnome.org/Projects/Libsecret}} is a library providing a high-level API for storing and retrieving application passwords and other secrets. All secrets are stored encrypted on disk and are retrieved via the \textit{Secret Service} which runs as a D-Bus service. \textit{Libsecret} is used in the Firefox Sync support in Epiphany to store and load the tokens that are considered secret and are persistent from one run to another, i.e. the \textit{Sync Key}, the \textit{sessionToken}, the \textit{uid} and the key bundles from the \textit{crypto} collection.
+
+\textbf{Libsoup}
+
+\textit{Libsoup}\footnote{\url{https://wiki.gnome.org/Projects/libsoup}} is an HTTP server/client library that provides both synchronous and asynchronous APIs, SSL (Secure Sockets Layer) support, proxy support, client/server support for Digest and Basic authentication. It uses \textit{GObject} and \textit{GLib} to integrate with GNOME applications. The Firefox Sync support in Epiphany uses \textit{Lipsoup} to send and receive data from the Firefox Sync servers asynchronously so that the UI thread won't block over HTTP requests.
+
+\textbf{JSON-GLib}
+
+\textit{JSON-GLib}\footnote{\url{https://wiki.gnome.org/Projects/JsonGlib}} is a \textit{GLib}-based library providing utility functions for parsing, generating and manipulating JSON data streams. It also has support for object serialization and deserialization based on \textit{GObject}'s type system. My project uses \textit{JSON-GLib} to parse the JSON-formatted responses from the Firefox Sync servers and to serialize and deserialize objects passed into and out of the Sync Storage Server.
+
+\subsection{Third Party Libraries}
+\label{sub-sec:thirs-party-libraries}
+
+Further are presented the third party libraries that helped with the implementation of the Firefox Sync support in Epiphany.
+
+\textbf{Nettle}
+
+\textit{Nettle}\footnote{\url{https://www.lysator.liu.se/~nisse/nettle/}} is a low-level cryptographic library written in C that can be used in different other programming languages through language bindings. It provides a consistent API, covering the most popular cryptographic algorithms, and tries to keep things as simple as possible by not doing any algorithm selection, memory allocation or I/O (Input/Output) operations. \textit{Nettle} is split into two libraries: \textit{libnettle} and \textit{libhogweed}. \textit{libnettle} contains the symmetric cryptographic algorithms that don't depend on \textit{GMP} (GNU Multiple Precision Arithmetic Library), while \textit{libhogweed} contains the public key algorithms that depend on \textit{GMP} \cite{moller2001nettle}. The Firefox Sync Support in Epiphany uses \textit{Nettle} for various purposes, such as AES encryption and decryption, RSA keys generation, RSA digest signing. Unfortunately, \textit{Nettle} does not provide support for HKDF, so I had to implement it myself.
+
+\section{Implementation Details}
+\label{sec:implementation-details}
+
+This section presents all the relevant technical details about the actual implementation of the Firefox Sync support in Epiphany.
+
+\subsection{Development Plan}
+\label{sub-sec:development-plan}
+
+To implement the browsing data synchronization support in Epiphany with the help of Firefox Sync, I have followed a development plan comprised of five main steps:
+
+\begin{enumerate}
+  \item \textbf{Implement all the prerequisites of the communication with the Firefox Sync servers}. This included implementing the client-side of the Hawk authentication scheme to authenticate the requests sent to the servers, the HKDF algorithm to derive all the additional tokens from the basic tokens and the action of creating a BrowserID assertion from an identity certificate. I had to implement these myself since I couldn't find any C libraries that would fit my needs.
+
+  \item \textbf{Implement the communication with the Firefox Sync servers} as described in \labelindexref{Chapter}{chapter:firefox-sync-architecture}. The goal of this step is represented by Epiphany being able to access the data records on the Sync Storage Server. This included implementing the sign in action to obtain a \textit{sessionToken} and the \textit{Sync Key} of the Firefox account from the Firefox Accounts Server and also obtaining the storage endpoint and credentials from the Token Server.
+
+  \item \textbf{Migrate the objects that describe the bookmarks, history and saved passwords of Epiphany to the Firefox object formats} described in \labelindexref{Subsection}{sub-sec:collections-overview}. This involved not only changing the structure of the Epiphany objects but also writing particular migrators to migrate the previous objects of the users to the new format automatically when Epiphany is opened. I implemented from scratch the open tabs objects of Epiphany, so they did not require migration. Typically, this step wouldn't have been necessary, but since we want Epiphany to be able to share data with Firefox, Epiphany has to use the same object formats as Firefox.
+
+  \item \textbf{Design and implement the actual synchronization logic}. This includes periodical synchronizations by importing and exporting objects to the Sync Storage Server and handling eventual conflicts caused by modifications from multiple sources.
+
+  \item \textbf{Create a user interface in the preferences dialog of Epiphany where users can configure their synchronization options}, as described in \labelindexref{Section}{sec:objectives}: what collections to be synchronized, whether to synchronize or not with Firefox and the synchronization frequency.
+\end{enumerate}
+
+\subsection{User Interface}
+\label{sub-sec:user-interface}
+
+Further, I am presenting how the user interface of the Firefox Sync support in Epiphany was designed and what its roles are. As mentioned in \labelindexref{Section}{sec:objectives}, the user interface serves the purpose of signing in with the Firefox account and configuring the synchronization preferences.
+
+\fig[scale=0.4]{src/img/05BeforeSignIn.pdf}{img:before-sign-in}{Signing In with the Firefox Account in Epiphany}
+
+To allow the users to sign in with their Firefox account in Epiphany, I've created a new tab in the preferences dialog of Epiphany that loads a Firefox iframe where the users can type the email and password of their Firefox account and click \textit{Sign In}. This is illustrated in \labelindexref{Figure}{img:before-sign-in}. The Firefox iframe is the web interface of the Firefox Accounts Server, called the Firefox Accounts Content Server, which Mozilla refers to as the preferred way of communicating sync-related information between the Firefox Accounts Server and the Firefox Sync clients \cite{fxa-content-server-webchannels}. The other way is through direct request to the {\tt /account/login} endpoint of the Firefox Accounts Server, but that has been restricted from public access. The communication between the content server and the client is made via two types of \textit{WebChannel} events: \textit{WebChannelMessageToChrome}, which are messages from the server to the client, and \textit{WebChannelMessageToContent}, which are messages from the client to the server.
+
+After the user types their Firefox account credentials in the Firefox iframe and clicks \textit{Sign In}, the Firefox Accounts Content Server sends in return a \textit{WebChannelMessageToChrome} message containing a bundle of tokens: a \textit{sessionToken}, a \textit{keyFetchToken}, an \textit{unwrapBKey} and the \textit{uid} associated with the current Firefox account. This message is received and parsed in the preferences dialog, then the tokens are extracted and passed to the synchronization service which proceeds to retrieve the \textit{Sync Key} from the Firefox Accounts Server.
+
+\fig[scale=0.5]{src/img/05AfterSignIn.pdf}{img:after-sign-in}{Configuring the Synchronization Options in Epiphany}
+
+After that, the preferences dialog replaces the Firefox iframe with a panel displaying the synchronization options to the user as described in \labelindexref{Section}{sec:use-cases}. This is illustrated in \labelindexref{Figure}{img:after-sign-in}. The entire panel and its components are constructed using \textit{GTK+}'s API. Every check button is bounded to a specific Epiphany setting, so every time a button is toggled, the corresponding setting is updated too. Every other regular button has a callback connected, so at every button click, a specific function is called to deliver the expected functionality.
+
+\subsection{Synchronization Modules}
+\label{sub-sec:synchronization-modules}
+
+\labelindexref{Figure}{img:sync-modules} illustrates the main modules that handle the synchronization in Epiphany and how they interconnect. As one can see, \textit{EphySyncService} stands between the Firefox Sync servers and the rest of Epiphany's modules, which makes it responsible for the most of the synchronization. Except for \textit{EphyBookmarksManager} and \textit{EphyBookmark}, which were already part of Epiphany's codebase, all the other modules were implemented by me. Each of them is described next.
+
+\fig[scale=0.5]{src/img/05SyncModules.pdf}{img:sync-modules}{Overview of Epiphany's Synchronization Modules}
+
+\textbf{\textit{EphySyncService}}
+
+\textit{EphySyncService} is a singleton object which is designed to operate mostly on its own and handle all the aspects of the communication with the Firefox Sync Servers, i.e. uploads and downloads records from the Sync Storage Server, retrieves the storage credentials from the Token Server, retrieves the \textit{Sync Key} and identity certificates from the Firefox Accounts Server, etc. Besides that, \textit{EphySyncService} also handles the act of signing-out, by destroying the current session, and does periodical synchronizations via every collection's manager. In the early prototypes of my project, \textit{EphySyncService} used to handle the act of signing in with the Firefox account too.
+
+As described in the previous section, \textit{EphySyncService} receives the Firefox Sync tokens from the preferences dialog when the user signs in. After that, \textit{EphySyncService} performs some additional one-time steps:
+\begin{enumerate}
+  \item It retrieves the \textit{Sync Key} from the Firefox Accounts Server, according to the flow described in \labelindexref{Subsection}{sub-sec:account-keys-endpoint}.
+  \item It verifies the version of the Sync Storage Server. As mentioned in \labelindexref{Subsection}{sub-sec:collections-overview}, the version is found on the \textit{meta/global} record on the Sync Storage Server. In case the \textit{meta/global} record is missing (this can happen when the Firefox account is newly created), \textit{EphySyncService} generates and uploads a new one. \textit{EphySyncService} only supports the latest version of the storage version, i.e. 1.5, so in case it detects a lower version, it aborts and destroys the current session, notifying the user to create a new Firefox account.
+  \item It retrieves the account's crypto keys from the Sync Storage Server. As mentioned in \labelindexref{Subsection}{sub-sec:collections-overview}, these are stored in the \textit{crypto/keys} record. If the \textit{crypto/keys} record does not exist (this can happen when the Firefox account is newly created), \textit{EphySyncService} generates and uploads a new \textit{crypto/keys} record that contains a randomly generated default key bundle.
+  \item It registers the current device in the \textit{clients} collection on the Sync Storage Server. The device id is randomly generated at login by \textit{EphySyncService} and cannot be changed by the user. The device name is set to then default value of \textit{{\tt @username}'s Epiphany on {\tt @hostname}} and can be later edited by the user from the preferences dialog.
+  \item It stores the secrets tokens (i.e. the \textit{sessionToken}, \textit{uid}, \textit{Sync Key} and crypto keys) encrypted on disk through the API of \textit{Libsecret}. The tokens continue to exist there and are loaded into memory at each start-up until the user signs out, at which point they are deleted.
+\end{enumerate}
+
+The above steps are chronological. If any error occurs at any point, \textit{EphySyncService} aborts and destroys the current session while notifying the user about the error.
+
+It is worth mentioning that \textit{EphySyncService} caches internally the storage credentials for future use. This means that whenever a request is sent for the first time to the Sync Storage Server, it queries the Firefox Accounts Server to obtain a signed identity certificate, creates a BrowserID assertion from it and trades it to Token Server for the storage credentials first. Then the newly-obtained credentials are used to authenticate all the upcoming storage requests. As mentioned in \labelindexref{Section}{sec:token-server}, the storage credentials have a limited lifetime, so when they expire, the whole process is resumed and a new pair of credentials is retrieved. To avoid the case when consecutive requests would trigger the obtaining of new storage credentials, \textit{EphySyncService} keeps an internal requests queue. When a storage request needs to be sent and the storage credentials are inexistent or expired, the current request and all the upcoming requests are queued until the storage credentials have been successfully obtained. When the storage credentials become available, the requests queue is emptied and all the requests are sent independently to the Sync Storage Server. \textit{EphySyncService} operates completely in the background, using only asynchronous calls to communicate with the Firefox Sync servers.
+
+As shown in \labelindexref{Figure}{img:sync-modules}, \textit{EphySyncService} does not deal with the synchronized objects of Epiphany directly, but via the pair of \textit{EphySynchronizableManager} and \textit{EphySynchronizable}. There are two interfaces that connect the remote collections from the Sync Storage Server with the local collections of Epiphany, which I will be describing next.
+
+\textbf{\textit{EphySynchronizableManager}}
+
+\textit{EphySynchronizableManager} is an interface that describes the standard functionality of every local collection. It includes methods to add, remove, save and merge objects and is implemented by every collection manager class: \textit{EphyBookmarksManager}, \textit{EphyHistoryManager}, \textit{EphyPasswordManager}, \textit{EphyOpenTabsManager}. All these managers are singleton objects too and their lifetime is bounded to Epiphany's. By implementing the methods of \textit{EphySynchronizableManager}'s interface, each manager exposes the content of their collection to \textit{EphySyncService} who forwards the content to the Sync Storage Server. How this happens: based on the previously configured user preferences of which collections to be synchronized, each manager is registered as an \textit{EphySynchronizableManager} to \textit{EphySyncService}. Next, when \textit{EphySyncService} initiates a synchronization, it queries the collections on the Sync Storage Server associated to each of the managers registered and calls the \textit{merge} method of each manager, passing the records retrieved from the server. The \textit{merge} method of each collection manager internally combines the remote objects from the server with the local objects, handling eventual conflicts and returns a new list of objects to be uploaded to the server. The merge logic of each collection is determined internally by each manager and is based on the properties of the objects they handle (e.g. two bookmarks with the same URI but different tags).
+
+Besides the methods mentioned above, \textit{EphySynchronizableManager} provides two signals too: \textit{synchronizable-modified} and \textit{synchronizable-deleted}. Each implementation of \textit{EphySynchronizableManager} triggers the first signal when an object has been newly-added or modified, so it needs to be (re)uploaded to the Sync Storage Server and the second signal when an object has been deleted locally, so it needs to be deleted remotely from the server too. \textit{EphySyncService} connects a callback to these signals for every manager that has been registered to it and disconnects it when the manager is unregistered. This way any local changes of the synchronized objects will be mirrored instantly on the Sync Storage Server. However, in case \textit{EphySyncService} finds a newer version of the object on the server, it downloads it, calls the \textit{remove} method of \textit{EphySynchronizableManager} on the old object and then calls the \textit{add} method on the new object.
+
+\textbf{\textit{EphySynchronizable}}
+
+\textit{EphySynchronizable} is the equivalent of \textit{EphySynchronizableManager} but for individual objects. It is an interface that describes the objects that are uploaded and downloaded from the Sync Storage Server. Its main purpose is to provide a wrapper around all the local objects that are synchronized, regardless of their type, by exposing methods of converting an object to a BSO and constructing an object from a BSO following the steps described in \labelindexref{Subsection}{sub-sec:encrypting-and-decrypting-records}. \textit{EphySyncService} calls the \textit{to BSO} method whenever it uploads an object to the server and the \textit{from BSO} method whenever it downloads an object from the server. \textit{EphySynchronizable} is implemented by \textit{EphyBookmark}, \textit{EphyPasswordRecord}, \textit{EphyHistoryRecord} and \textit{EphyOpenTabsRecord}, which describe the synchronized objects at Epiphany level.
+
+\textbf{\textit{EphySyncCrypto}}
+
+\textit{EphySyncCrypto} is a helper module that provides utility functions to handle all the cryptographic stuff with the help of the \textit{Nettle} library. Its API includes methods to:
+
+\begin{itemize}
+  \item Derive the \textit{sessionToken} into the appropriate tokens and generate an RSA key pair to sign the identity certificate as described in \labelindexref{Subsection}{sub-sec:sign-certificate-endpoint}.
+  \item Derive the \textit{keyFetchToken} into the appropriate tokens and extract the \textit{Sync Key} as described in \labelindexref{Subsection}{sub-sec:account-keys-endpoint}.
+  \item Derive the \textit{Sync Key Bundle} from the \textit{Sync Key} as described in \labelindexref{Subsection}{sub-sec:encrypting-and-decrypting-records}.
+  \item Encrypt a serialized object to a BSO payload and decrypt a BSO payload to a serialized object.
+  \item Create a BrowserID assertion for a given audience from an identity certificate and an RSA key pair.
+  \item Create a Hawk header for a given request from a pair of Hawk credentials to authenticate the request.
+\end{itemize}
+
+Since \textit{Nettle} does not provide support for HKDF yet, \textit{EphySyncCrypto} uses its own implementation of HKDF internally. \textit{EphySyncCrypto} is mostly included by all the other modules.
+
+\textbf{\textit{EphySyncDebug}}
+
+\textit{EphySyncDebug} is an extra module for debug purposes only. All its functions use only synchronous API calls and are not meant to be used in production code. Its API includes methods to:
+
+\begin{itemize}
+  \item View the sync secret tokens stored on disk.
+  \item View an individual record or an entire collection on the Sync Storage Server.
+  \item Delete an individual record or an entire collection on the Sync Storage Server.
+  \item View the configuration info of the Sync Storage Server.
+\end{itemize}
+
+Since \textit{EphySyncDebug} interacts with the Sync Storage Server itself, this means it has to go through all the process of obtaining a signed identity certificate and a pair of storage credentials on its own. This is achieved with only synchronous requests, which is in contrast with \textit{EphySyncService}, where all requests are asynchronous. However, \textit{EphySyncDebug} does not need to sign in to obtain the \textit{Sync Key} itself, because it operates exclusively on an already signed in account.
+
+\section{Problems Encountered}
+\label{sec:problems-encountered}
+
+The implementation described above may seem straightforward, but it was rather twisted in fact. That is for a couple of reasons which I am describing next.
+
+\subsection{Understanding Firefox Sync}
+\label{sub-sec:understanding-firefox-sync}
+
+The documentation of Firefox Sync is scattered and somehow incomplete, many of the implementation details not being covered thoroughly enough. Therefore, it took me a while to fully understand how the synchronization clients need to interact with the Firefox Sync servers. I had to go through multiple sources of online documentation and often consult the Firefox source code to understand better how things work internally. Also, I found myself in situations where I had to ask for help directly from the Mozilla developers through their dedicated mailing lists and, fortunately for me, they were kind enough to provide detailed explanations. Luckily for further contributors, Mozilla recently initiated a project to centralize all the documentation of Firefox Sync in one place.
+
+\subsection{Synchronization Support Structure}
+\label{sub-sec:sync-support-structure}
+
+Another challenge was structuring the synchronization support in such a manner as to be easy to understand by other GNOME developers and contributors. Therefore, I tried to make the synchronization support as modular as possible, by separating its main functionalities into different files. This involved refactoring some part of Epiphany's code, which proved challenging since Epiphany is a large project. Not only I had to understand most of its source code, but also I had to make sure the code I introduce or change doesn't break any prior functionality, nor introduce new bugs.
+
+\section{Lessons Learned}
+\label{sec:lessons-learned}
+
+While working on the Firefox Sync support in Epiphany, I have learned valuable lessons that I am going to take forever into consideration in the future. I have come to the realization that whenever working on a large project, it is imperative to have a precise plan of how you are going to achieve the goal of the project before you start to implement it. This includes a clear roadmap to describe how and when each project specification is achieved.
+
+Moreover, I have learned that when you contribute to an open source project, it is important to write quality code that is easy to be understood and built upon in the future by other developers and contributors. This emphasizes not only the importance of a clean implementation that follows the Unix philosophy\footnote{\url{https://en.wikipedia.org/wiki/Unix_philosophy}} of \textit{doing one thing and doing it well} but also the importance of properly documenting your code. Furthermore, I have learned that when working on a real-world project like Epiphany it is important to constantly seek review and feedback to your work to make sure the outside world welcomes it.

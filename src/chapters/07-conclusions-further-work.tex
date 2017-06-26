@@ -1,0 +1,35 @@
+\chapter{Conclusions and Further Work}
+\label{chapter:conclusions-further-work}
+
+This thesis has presented the Firefox Sync support in Epiphany, which is a synchronization solution for the open source web browser, Epiphany. This solves one of the current shortcomings of Epiphany, by providing a way for its users to synchronize their browsing data, i.e. bookmarks, history, passwords, open tabs, across their devices. Since Epiphany is an open source project constantly evolving, it is very likely that the work on the synchronization support will be continued in the future. Therefore, it is important to understand the current status of the project and describe some possible improvements.
+
+\section{Current Status}
+\label{section:current-status}
+
+In its current form, the Firefox Sync support in Epiphany has accomplished all the objectives presented in \labelindexref{Section}{sec:objectives}. This means that Epiphany benefits from an effective communication with the Firefox Sync servers and can access the data on the Sync Storage Server. Moreover, users have at their disposal a dedicated interface where they can sign in with their Firefox account and edit their synchronization preferences.
+
+Also, Epiphany can synchronize all of the four collections (bookmarks, history, passwords, open tabs) that were initially prescribed. As mentioned in \labelindexref{Section}{sec:project-testing}, the collections can be synchronized between Epiphany instances only or between Epiphany and Firefox instances (desktop and mobile). Therefore, my project has met its purpose and is currently awaiting to be merged in Epiphany's \textit{master} branch, at which point it will become eligible to be shipped in the next release of GNOME 3.26.
+
+\section{Further Work}
+\label{section:further-work}
+
+While all the initial objectives of the project have been achieved, there are some things which can be further implemented to improve the synchronization support in Epiphany:
+
+\begin{itemize}
+  \item Allow users to synchronize form data too. Epiphany's support for form autofill is still under development, but once it is finished, the form data will be eligible to be synchronized with Firefox Sync. The form data is stored in the \textit{forms} collection on the Sync Storage Server, which is part of the default collections. To be able to share the form data with Firefox, Epiphany would have to follow the same format for the form data objects as Firefox.
+
+  \item Allow users to synchronize Epiphany preferences. While the form data represents user-specific browsing data, the preferences describe the state of the web browser itself and, therefore, cannot be synchronized between Epiphany and Firefox. The Epiphany preferences would have to be synchronized between Epiphany instances only. Because of that, Epiphany cannot use the \textit{preferences} default collection on the Sync Storage Server but needs to create and use its own collection on the server.
+
+  \item Write a test suite for the synchronization support. The tests should be free to use synchronous calls instead of asynchronous calls and should cover the communication with the Firefox Sync servers in the first place and then other aspects such as collections synchronization.
+\end{itemize}
+
+Besides these, as mentioned in \labelindexref{Chapter}{chapter:testing-evaluation}, a future thing that falls into my direct responsibility is to collect feedback from the GNOME community on the synchronization support and fix the issues that may be reported, if any.
+
+\section{Conclusions}
+\label{section:conclusions}
+
+The Firefox Sync support in Epiphany provides a seamless way for Epiphany users to synchronize their browsing data across their devices with only a Firefox account. The synchronization can take place between Epiphany instances only or between Epiphany and Firefox instances and includes the synchronization of bookmarks, browsing history, saved passwords and open tabs, thus achieving the purpose of the project.
+
+I have built the synchronization support with a clean and modular design, as to be easily understood and further improved. I believe this project may be regarded as a valuable contribution to Epiphany and GNOME itself, by not only the developers but the users too.
+
+To me, this is the most challenging project I have worked on so far, but also the most satisfying in term of results. The first part comes from the idea of building something from scratch with no prior knowledge of it, while the second part comes from the thought of knowing that your work will result in something that is going to be used by many people from a great community.

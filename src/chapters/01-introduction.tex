@@ -1,0 +1,31 @@
+\chapter{Introduction}
+\label{chapter:introduction}
+
+Synchronization is a widely-spread topic across many Computer Science fields, which has constantly evolved over time \cite{shin1994real}. The main forms of synchronization are the synchronization of threads and processes and the synchronization of data. The former refers to how different threads and processes cooperate to use and share the system resources in a correct and efficient manner, while the latter refers to how data is correctly mirrored across different locations. This thesis only covers aspects of data synchronization and, in particular, data synchronization in web browsers. Therefore, every use of the term \textit{synchronization} should be perceived in the context of data synchronization and not process synchronization.
+
+\section{Project Background}
+\label{sec:project-background}
+
+Data synchronization represents the process of establishing data consistency between multiple sources, as well as the subsequent continuous updates to maintain the integrity of the data over time. This is not a one-time task, but a task that requires planning, managing, scheduling, and control. Instances of data synchronization range from file synchronization and version control, database replication to distributed filesystems, cache memory consistency and RAID (Redundant Array of Independent Disks) mirroring.
+
+To better understand the need for synchronization, take the example of an enterprise which decided to spread their systems geographically over multiple locations to reduce the network latency and increase reliability by reducing the risk of a failure that could affect all systems. In this scenario, the data needs to be synchronized across all the locations so that all systems will be accessing the same data even though the data is modified from only one location. Another example is a user who owns multiple devices such as computers, laptops, smartphones or tablets and wishes to be able to access their files on all the devices.
+
+On a particular note, there is web browser data synchronization. Web browsers are undoubtedly some of the most used software products in history, without whom browsing the Internet would be reduced to making HTTP (Hypertext Transfer Protocol) requests and reading the content of the web pages directly from the terminal.
+
+Some of the common features of web browsers are:
+\begin{itemize}
+  \item Bookmarking websites for further easy access.
+  \item Keeping track of the browsing history to remember visited websites.
+  \item Saving browsing data such as form passwords, open tabs and preferences.
+\end{itemize}
+
+All of these translate to user-specific data that users may find useful to have on all the computers and mobile devices they own, hence the need for synchronization in web browsers.
+
+\section{Project Description}
+\label{sec:project-description}
+
+Epiphany (also called GNOME Web\footnote{\url{https://wiki.gnome.org/Apps/Web}}) is an open source browser developed for the GNOME\footnote{\url{https://www.gnome.org/}} desktop environment, which was initially released in late 2002. Epiphany's goal is to be a web browser that lets the user focus on the web content instead of the browser application, its tagline being \textit{Simple. Clean. Beautiful.}.
+
+Unfortunately, despite being one of the oldest web browsers, Epiphany falls into the category of web browsers that do not have support for synchronizing user data. Missing such a feature can be considered a significant drawback when it comes to meeting the user expectations of a modern web browser.
+
+Therefore, my project introduces a synchronization support in Epiphany that allows users to seamlessly synchronize their bookmarks, browsing history, saved passwords and open tabs across their devices. The synchronization is implemented with the help of Firefox Sync\footnote{\url{https://wiki.mozilla.org/CloudServices/Sync}}, an open source web browser synchronization feature developed by Mozilla\footnote{\url{https://www.mozilla.org/}}, which is used to synchronize browsing data in Firefox\footnote{\url{https://www.mozilla.org/firefox/}}. This means Epiphany and Firefox will be able to share data, which in turn means that users will be able to synchronize their browsing data across both web browsers.
