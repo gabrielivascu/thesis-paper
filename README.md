@@ -1,51 +1,57 @@
+# LaTeX Template
+
 Original author: Mircea Bardac, mircea@bardac.net
 
-Original repository: https://github.com/systems-cs-pub-ro/templates/tree/master/theses/diploma
+Original repo: https://github.com/systems-cs-pub-ro/templates/tree/master/theses/diploma
 
 Copyright notice: you must keep the original author(s)/copyright information in the files
 
 This directory contains the Bachelor Thesis template written by Mircea Bardac
-- The thesis text is placed in "src/"
-- The thesis is generated into "thesis.pdf"
+* The thesis text is placed in `src/`
+* The thesis is generated into `thesis.pdf`
+
+# Requirements
 
 Debian packages required for building the thesis:
-- texlive
-- texlive-latex-extra
+* texlive
+* texlive-latex-extra
 
-Setup:
-* change everything as needed in src/
-* don't forget to change global.tex
-* to change the color of the links search for the word "blue"
-  in thesis.cs.pub.ro and change it (you might want to print
-  the links in black)
+# Setup
 
-Important note:
-* The "_" (underscore) character doesn't have to be escaped
-  ('underscore' package is used)
-* To write in Romanian, uncomment the "Romanian Language support"
-  section in thesis.cs.pub.ro and use UTF8 encoding for .tex files
-* For different line spacing, write for example \onehalfspacing
-  before the part which should be with 1.5 line spacing;
-  for example, writing this in "thesis.tex" before "\input{src/main}"
-  will make all the chapters with 1.5 line spacing
+* Change everything as needed in `src/`
+* Don't forget to change `global.tex`
+* To change the color of the links search for the word "blue" in `thesis.cs.pub.ro` and change it (you might want to print the links in black)
 
-For more syntax definitions please check thesis.cs.pub.ro.cls.
-Some of the definitions and their usage can be found below.
+# Important Notes
 
-Implemented commands:
-% command for formatting inline functions
+* The `_` (underscore) character doesn't have to be escaped ('underscore' package is used)
+* To write in Romanian, uncomment the "Romanian Language support" section in `thesis.cs.pub.ro` and use UTF8 encoding for .tex files
+* For different line spacing, write for example `\onehalfspacing` before the part which should be with 1.5 line spacing; for example, writing this in `thesis.tex` before `\input{src/main}` will make all the chapters with 1.5 line spacing
+
+For more syntax definitions please check `thesis.cs.pub.ro.cls`. Some of the definitions and their usage can be found below.
+
+# Implemented Commands
+
+Command for formatting inline functions:
+```
 % Usage (default language = C)
 %   \func{function_name}
 %   \func[language]{function_name}
 %      'language' must be supported by package 'listings'
+```
 
-% command for formatting file names
+Command for formatting file names:
+```
 % Usage: \file{filename}
+```
 
-% command for formatting inline commands
+Command for formatting inline commands:
+```
 % Usage: \cmd{command with parameters}
+```
 
-% commands for creating labeled hyper-linked references
+Commands for creating labeled hyper-linked references:
+```
 % Usage: \labelindexref{Section}{sec:intro}
 %   creates hyperlink with text "Section <number>"
 %   where <number> is the section number of sec:intro
@@ -53,28 +59,40 @@ Implemented commands:
 % Usage: \labelref{text for hyperlink}{sec:intro}
 %   creates hyperlink with text "text for hyperlink"
 %   pointing to sec:intro
+```
 
-% command for inserting labeled figures
+Command for inserting labeled figures:
+```
 % Usage: \fig[params]{file}{label}{caption}
 %   where: file is the file name
 %          label is the label used for referencing the figure
 %          caption is the text appearing with the figure
 %          params is a list of parameters accepted
 %            by the \includegraphics command, for example "scale=0.5"
+```
 
-% Footnote with hyperlinked URL
+Footnote with hyperlinked URL:
+```
 % Usage \footnote{\url{http://www.google.com/}}
+```
 
-% Creating abbreviations
+Creating abbreviations:
+```
 %    place it anywhere in the .tex sources
 %    does not render the abbreviation at the location where placed
 % \abbrev{CS}{Computer Science}
+```
 
-% Adding words/concepts to the index
+Adding words/concepts to the index:
+```
 %    place it anywhere in the .tex sources
 %    does not render the words at the location where placed
 % \index{context switch latency}
+```
 
+# Examples
+
+```
 % Inline Listing example
 \lstset{language=make,caption=Application Makefile,label=lst:app-make}
 \begin{lstlisting}
@@ -82,12 +100,16 @@ CSRCS = app.c
 SRC_DIR =..
 include $(SRC_DIR)/config/application.cfg
 \end{lstlisting}
+```
 
+```
 % Listing from file example:
 \lstset{caption=Test Specification generation Makefile (Makefile.spec),
 label=lst:makefile-spec}
 \lstinputlisting{src/code/build/Makefile.spec}
+```
 
+```
 % Table example
 \begin{center}
 \begin{table}[htb]
@@ -104,3 +126,4 @@ label=lst:makefile-spec}
   \label{table:reports}
 \end{table}
 \end{center}
+```
